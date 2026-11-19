@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Filmy</title>
+  <link rel="icon" type="image/ico" href="favicon.ico">
+
+  <!-- Excel library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    *, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background-color: rgb(20, 17, 31);
+  display: flex;
+  justify-content: center;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.filmy {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0 12px;
+}
+
+.headline {
+  height: 5dvh;
+  min-height: 40px;
+  color: rgb(211, 211, 211);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.zoznam {
+  height: 95dvh;
+  overflow-y: auto;
+  width: 100%;
+  padding-bottom: 10px;
+}
+
+.film-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(211, 211, 211);
+  min-height: 50px;
+  width: 100%;
+  border-bottom: 1px solid rgb(55, 50, 65);
+  padding: 10px 5px;
+  font-size: 17px;
+}
+
+.film-name a {
+  flex: 1;
+  min-width: 0;
+  color: rgb(211, 211, 211);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.film-name a:hover {
+  color: orange;
+}
+
+.film-year,
+.film-rating {
+  font-size: 14px;
+  color: rgb(160, 160, 160);
+  white-space: nowrap;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <div class="filmy">
+
+    <div class="headline">Zoznam filmov</div>
+
+    <div class="zoznam"></div>
+
+  </div>
+
+  <script>
+
+    const zoznam = document.querySelector(".zoznam");
+
+    // Read Excel file
+    fetch("filmy-nove.xlsx")
+      .then(response => response.arrayBuffer())
+      .then(data => {
+
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        // Find last populated row
+        const range = XLSX.utils.decode_range(sheet["!ref"]);
+
+        // Read Excel rows 3 to last row
+        for (let i = 3; i <= range.e.r + 1; i++) {
+
+          const year = sheet[`B${i}`]?.v;
+          const title = sheet[`C${i}`]?.v;
+          const rating = sheet[`D${i}`]?.v;
+          const link = sheet[`E${i}`]?.v;
+
+          if (!title) continue;
+
+          const createDiv = document.createElement("div");
+          createDiv.classList.add("film-name");
+
+          // Film year
+          const createYear = document.createElement("span");
+          createYear.classList.add("film-year");
+          createYear.textContent = year ?? "";
+
+          // Film title and hyperlink
+          const createLink = document.createElement("a");
+          createLink.textContent = title;
+
+          if (link && /^https?:\/\//i.test(String(link))) {
+            createLink.href = link;
+            createLink.target = "_blank";
+            createLink.rel = "noopener noreferrer";
+          }
+
+          // CSFD rating
+          const createRating = document.createElement("span");
+          createRating.classList.add("film-rating");
+          createRating.textContent = rating != null ? `${rating}%` : "";
+
+          // Put everything together
+          createDiv.appendChild(createYear);
+          createDiv.appendChild(createLink);
+          createDiv.appendChild(createRating);
+
+          zoznam.appendChild(createDiv);
+
+        }
+
+      })
+      .catch(error => {
+        console.error("Error reading Excel file:", error);
+        zoznam.textContent = "Error loading Excel file.";
+      });
+
+  </script>
+
+</body>
+</html>
